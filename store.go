@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/csv"
 	"fmt"
 	"io"
+	"os"
 )
 
 type Store interface {

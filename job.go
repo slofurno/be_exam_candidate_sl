@@ -2,12 +2,24 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
+	"io"
+	"strconv"
 )
 
 type Job struct {
 	id      string
 	results []*Person
 	errors  []*invalidRecord
+}
+
+type invalidRecord struct {
+	line    int
+	message string
+}
+
+func (s *invalidRecord) ToRecord() []string {
+	return []string{strconv.Itoa(s.line), s.message}
 }
 
 func newJob(id string) *Job {
@@ -57,7 +69,7 @@ func (s *Job) processRecords(store Store) error {
 	}
 
 	defer input.Close()
-	reader := csv.NewReader(f)
+	reader := csv.NewReader(input)
 	line := -1
 
 	for {

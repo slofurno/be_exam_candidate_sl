@@ -1,58 +1,18 @@
 package main
 
 import (
-	"encoding/csv"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/fsnotify/fsnotify"
-	"io"
 	"log"
-	"os"
-	"strconv"
+	"path"
+	"regexp"
 )
 
-type invalidRecord struct {
-	line    int
-	message string
-}
+var matchId = regexp.MustCompile(`(\S+)\.csv$`)
 
-func (s *invalidRecord) ToRecord() []string {
-	return []string{strconv.Itoa(s.line), s.message}
-}
-
-func processFile(name string) ([]*Person, []*invalidRecord, error) {
-	f, err := os.Open(name)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	r := csv.NewReader(f)
-	var parsed []*Person
-	var invalid []*invalidRecord
-	line := 0
-
-	for {
-		record, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		if line > 0 {
-			if person, err := recordToPerson(record); person != nil {
-				parsed = append(parsed, person)
-			} else {
-				invalid = append(invalid, &invalidRecord{line, err})
-			}
-		}
-		line++
-	}
-
-	return parsed, invalid, nil
+func extractId(p string) []string {
+	_, filename := path.Split(p)
+	return matchId.FindStringSubmatch(filename)
 }
 
 func main() {
@@ -64,35 +24,13 @@ func main() {
 
 	store := newFileStore(*inputDir, *outputDir, *errorDir)
 	job := newJob("example")
-	job.processRecords(store)
-
-	out, err := os.Create("output/example.json")
-
+	err := job.processRecords(store)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	if err = json.NewEncoder(out).Encode(people); err != nil {
+	err = job.writeResults(store)
+	if err != nil {
 		log.Fatal(err)
-	}
-
-	out.Close()
-
-	if len(invalid) > 0 {
-		errorf, err := os.Create("errors/example.csv")
-		defer errorf.Close()
-
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer errorf.Close()
-		writer := csv.NewWriter(errorf)
-		for i := 0; i < len(invalid); i++ {
-			_ = writer.Write(invalid[i].ToRecord())
-		}
-
-		writer.Flush()
-		errorf.Write([]byte("LINE_NUM,ERROR_MSG\n"))
 	}
 
 	watcher, err := fsnotify.NewWatcher()
@@ -101,7 +39,7 @@ func main() {
 	}
 	defer watcher.Close()
 
-	err = watcher.Add("./input")
+	err = watcher.Add(*inputDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -111,7 +49,17 @@ func main() {
 		case event := <-watcher.Events:
 			switch event.Op {
 			case fsnotify.Create:
-				log.Println("created file:", event.Name)
+				if id := extractId(event.Name); id != nil {
+					job := newJob(id[1])
+					err := job.processRecords(store)
+					if err != nil {
+						log.Fatal(err)
+					}
+					err = job.writeResults(store)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
 			default:
 				log.Println(event.String())
 			}
