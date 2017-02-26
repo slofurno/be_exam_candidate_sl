@@ -23,15 +23,6 @@ func main() {
 	flag.Parse()
 
 	store := newFileStore(*inputDir, *outputDir, *errorDir)
-	job := newJob("example")
-	err := job.processRecords(store)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = job.writeResults(store)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -51,13 +42,21 @@ func main() {
 			case fsnotify.Create:
 				if id := extractId(event.Name); id != nil {
 					job := newJob(id[1])
+					log.Println("processing job id:", id[1])
 					err := job.processRecords(store)
 					if err != nil {
-						log.Fatal(err)
+						log.Println("error processing records:", err)
+						continue
 					}
 					err = job.writeResults(store)
 					if err != nil {
-						log.Fatal(err)
+						log.Println("error writing job output:", err)
+						continue
+					}
+					err = job.writeErrors(store)
+					if err != nil {
+						log.Println("error writing job errors:", err)
+						continue
 					}
 				}
 			default:

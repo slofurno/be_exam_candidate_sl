@@ -41,6 +41,10 @@ func (s *Job) writeResults(store Store) error {
 		return err
 	}
 
+	return nil
+}
+
+func (s *Job) writeErrors(store Store) error {
 	if len(s.errors) > 0 {
 		errorOut, err := store.OpenError(s.id)
 		if err != nil {
@@ -57,7 +61,6 @@ func (s *Job) writeResults(store Store) error {
 			return err
 		}
 	}
-
 	return nil
 }
 
