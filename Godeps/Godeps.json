@@ -1,0 +1,16 @@
+{
+	"ImportPath": "github.com/slofurno/watcher",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/fsnotify/fsnotify",
+			"Comment": "v1.4.2-3-ga904159",
+			"Rev": "a904159b9206978bb6d53fcc7a769e5cd726c737"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "e4594059fe4cde2daf423055a596c2cd1e6c9adf"
+		}
+	]
+}
