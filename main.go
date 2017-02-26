@@ -55,18 +55,6 @@ func processFile(name string) ([]*Person, []*invalidRecord, error) {
 	return parsed, invalid, nil
 }
 
-type Store interface {
-	GetRecords(path string) ([][]string, error)
-	WriteOutput(path string, values []*Person) error
-	WriteError(path string, values [][]string) error
-}
-
-type FileStore struct {
-	inputDir  string
-	outputDir string
-	errorDir  string
-}
-
 func main() {
 
 	inputDir := flag.String("in", "input", "directory to watch for input")
@@ -74,14 +62,9 @@ func main() {
 	errorDir := flag.String("err", "errors", "error record directory")
 	flag.Parse()
 
-	name := "example.csv"
-	fmt.Println(*outputDir)
-	fmt.Println(*inputDir)
-	err := os.Mkdir(*outputDir, os.ModePerm)
-	fmt.Println(err)
-	os.Mkdir(*errorDir, os.ModePerm)
-
-	people, invalid, err := processFile(name)
+	store := newFileStore(*inputDir, *outputDir, *errorDir)
+	job := newJob("example")
+	job.processRecords(store)
 
 	out, err := os.Create("output/example.json")
 
