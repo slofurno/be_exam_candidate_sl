@@ -3,76 +3,14 @@ package main
 import (
 	"encoding/csv"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"io"
 	"log"
 	"os"
-	"regexp"
 	"strconv"
 )
-
-type Name struct {
-	First  string `json:"first"`
-	Middle string `json:"middle,omitempty"`
-	Last   string `json:"last"`
-}
-
-type Person struct {
-	Id    string `json:"id"`
-	Name  Name   `json:"name"`
-	Phone string `json:"phone"`
-}
-
-var (
-	validId = regexp.MustCompile(`^\d{8}$`)
-)
-
-func (p *Person) Valid() (bool, string) {
-	if id, _ := validId.MatchString(p.Id); !id {
-		return false, "invalid id"
-	}
-
-	if first, _ := regexp.MatchString(`^.{1,15}$`, p.Name.First); !first {
-		return false, "invalid first name"
-	}
-
-	if middle, _ := regexp.MatchString(`^.{0,15}$`, p.Name.Middle); !middle {
-		return false, "invalid middle name"
-	}
-
-	if last, _ := regexp.MatchString(`^.{1,15}$`, p.Name.Last); !last {
-		return false, "invalid last name"
-	}
-
-	if phone, _ := regexp.MatchString(`^\d{3}-\d{3}-\d{4}$`, p.Phone); !phone {
-		return false, "invalid phone number"
-	}
-
-	return true, ""
-}
-
-func fromRecord(record []string) (*Person, string) {
-	if len(record) != 5 {
-		return nil, "invalid record length"
-	}
-
-	p := &Person{
-		Id: record[0],
-		Name: Name{
-			First:  record[1],
-			Middle: record[2],
-			Last:   record[3],
-		},
-		Phone: record[4],
-	}
-
-	if ok, err := p.Valid(); !ok {
-		return nil, err
-	}
-
-	return p, ""
-}
 
 type invalidRecord struct {
 	line    int
@@ -105,7 +43,7 @@ func processFile(name string) ([]*Person, []*invalidRecord, error) {
 		}
 
 		if line > 0 {
-			if person, err := fromRecord(record); person != nil {
+			if person, err := recordToPerson(record); person != nil {
 				parsed = append(parsed, person)
 			} else {
 				invalid = append(invalid, &invalidRecord{line, err})
@@ -117,10 +55,31 @@ func processFile(name string) ([]*Person, []*invalidRecord, error) {
 	return parsed, invalid, nil
 }
 
+type Store interface {
+	GetRecords(path string) ([][]string, error)
+	WriteOutput(path string, values []*Person) error
+	WriteError(path string, values [][]string) error
+}
+
+type FileStore struct {
+	inputDir  string
+	outputDir string
+	errorDir  string
+}
+
 func main() {
+
+	inputDir := flag.String("in", "input", "directory to watch for input")
+	outputDir := flag.String("out", "output", "output directory")
+	errorDir := flag.String("err", "errors", "error record directory")
+	flag.Parse()
+
 	name := "example.csv"
-	os.Mkdir("output", os.ModePerm)
-	os.Mkdir("errors", os.ModePerm)
+	fmt.Println(*outputDir)
+	fmt.Println(*inputDir)
+	err := os.Mkdir(*outputDir, os.ModePerm)
+	fmt.Println(err)
+	os.Mkdir(*errorDir, os.ModePerm)
 
 	people, invalid, err := processFile(name)
 
@@ -148,11 +107,11 @@ func main() {
 		for i := 0; i < len(invalid); i++ {
 			_ = writer.Write(invalid[i].ToRecord())
 		}
-		_ = writer.Flush()
+
+		writer.Flush()
 		errorf.Write([]byte("LINE_NUM,ERROR_MSG\n"))
 	}
 
-	fmt.Println("vim-go")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
