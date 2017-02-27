@@ -10,6 +10,7 @@ type Store interface {
 	OpenInput(id string) (io.ReadCloser, error)
 	OpenOutput(id string) (io.WriteCloser, error)
 	OpenError(id string) (io.WriteCloser, error)
+	RemoveInput(id string) error
 }
 
 type FileStore struct {
@@ -36,4 +37,8 @@ func (s *FileStore) OpenOutput(id string) (io.WriteCloser, error) {
 
 func (s *FileStore) OpenError(id string) (io.WriteCloser, error) {
 	return os.Create(fmt.Sprintf("%s/%s.csv", s.errorDir, id))
+}
+
+func (s *FileStore) RemoveInput(id string) error {
+	return os.Remove(s.inputDir + "/" + id + ".csv")
 }

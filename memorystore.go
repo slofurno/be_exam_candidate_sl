@@ -47,6 +47,10 @@ func (s *MemoryStore) OpenError(id string) (io.WriteCloser, error) {
 	return s.errors, nil
 }
 
+func (s *MemoryStore) RemoveInput(id string) error {
+	return nil
+}
+
 func newMemoryStory() *MemoryStore {
 	return &MemoryStore{
 		input:  bufferedReadCloser{&bytes.Buffer{}},

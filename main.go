@@ -58,6 +58,11 @@ func main() {
 						log.Println("error writing job errors:", err)
 						continue
 					}
+
+					if err := job.cleanup(store); err != nil {
+						log.Println("error during job cleanup", err)
+						continue
+					}
 				}
 			default:
 				log.Println(event.String())

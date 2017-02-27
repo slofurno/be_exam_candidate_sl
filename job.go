@@ -98,3 +98,7 @@ func (s *Job) processRecords(store Store) error {
 
 	return nil
 }
+
+func (s *Job) cleanup(store Store) error {
+	return store.RemoveInput(s.id)
+}
