@@ -4,14 +4,14 @@ import (
 	"flag"
 	"github.com/fsnotify/fsnotify"
 	"log"
-	"path"
+	"path/filepath"
 	"regexp"
 )
 
 var matchId = regexp.MustCompile(`(\S+)\.csv$`)
 
 func extractId(p string) []string {
-	_, filename := path.Split(p)
+	_, filename := filepath.Split(p)
 	return matchId.FindStringSubmatch(filename)
 }
 
