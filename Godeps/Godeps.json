@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/slofurno/watcher",
+	"ImportPath": "github.com/slofurno/be_exam_candidate_sl",
 	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
 	"Deps": [
