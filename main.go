@@ -43,18 +43,15 @@ func main() {
 				if id := extractId(event.Name); id != nil {
 					job := newJob(id[1])
 					log.Println("processing job id:", id[1])
-					err := job.processRecords(store)
-					if err != nil {
+					if err := job.processRecords(store); err != nil {
 						log.Println("error processing records:", err)
 						continue
 					}
-					err = job.writeResults(store)
-					if err != nil {
+					if err := job.writeResults(store); err != nil {
 						log.Println("error writing job output:", err)
 						continue
 					}
-					err = job.writeErrors(store)
-					if err != nil {
+					if err := job.writeErrors(store); err != nil {
 						log.Println("error writing job errors:", err)
 						continue
 					}

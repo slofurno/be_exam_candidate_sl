@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
+	"path"
 )
 
 type Store interface {
@@ -28,17 +28,17 @@ func newFileStore(inputDir, outputDir, errorDir string) *FileStore {
 }
 
 func (s *FileStore) OpenInput(id string) (io.ReadCloser, error) {
-	return os.Open(s.inputDir + "/" + id + ".csv")
+	return os.Open(path.Join(s.inputDir, id+".csv"))
 }
 
 func (s *FileStore) OpenOutput(id string) (io.WriteCloser, error) {
-	return os.Create(fmt.Sprintf("%s/%s.json", s.outputDir, id))
+	return os.Create(path.Join(s.outputDir, id+".json"))
 }
 
 func (s *FileStore) OpenError(id string) (io.WriteCloser, error) {
-	return os.Create(fmt.Sprintf("%s/%s.csv", s.errorDir, id))
+	return os.Create(path.Join(s.errorDir, id+".csv"))
 }
 
 func (s *FileStore) RemoveInput(id string) error {
-	return os.Remove(s.inputDir + "/" + id + ".csv")
+	return os.Remove(path.Join(s.inputDir, id+".csv"))
 }

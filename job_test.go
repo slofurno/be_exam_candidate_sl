@@ -78,6 +78,7 @@ INTERNAL_ID,FIRST_NAME,MIDDLE_NAME,LAST_NAME,PHONE_NUM
 87654321,esteban,m,something,123-123-1234
 8765432,esteban,m,something,123-123-1234
 87654321,esteban,,something,123-123-1234
+87654321,esteban,
 `)
 
 	job := newJob("test")
@@ -93,7 +94,7 @@ INTERNAL_ID,FIRST_NAME,MIDDLE_NAME,LAST_NAME,PHONE_NUM
 		t.Errorf("expected 3 valid records read, got %d\n", len(job.results))
 	}
 
-	if len(job.errors) != 1 {
+	if len(job.errors) != 2 {
 		t.Errorf("expected 1 invalid records read, got %d\n", len(job.errors))
 	}
 }
